@@ -1,0 +1,49 @@
+{
+  "name": "quorum",
+  "version": "0.0.1",
+  "description": "Multi-AI consensus review for pull requests. No merges to main without unanimous AI approval.",
+  "keywords": ["github-action", "code-review", "ai", "claude", "codex", "gemini", "grok", "ci"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MehrshadFb/quorum.git"
+  },
+  "homepage": "https://github.com/MehrshadFb/quorum",
+  "bugs": "https://github.com/MehrshadFb/quorum/issues",
+  "type": "module",
+  "bin": {
+    "quorum": "./dist/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "template",
+    "action.yml",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "npm run build:action && npm run build:cli",
+    "build:action": "ncc build src/action.ts -o dist/action --minify",
+    "build:cli": "ncc build src/cli.ts -o dist/cli --minify",
+    "dev": "tsx",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test src/consensus.test.ts src/config.test.ts src/deliberation.test.ts",
+    "review": "tsx src/cli.ts review"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.0",
+    "@clack/prompts": "^0.9.0",
+    "commander": "^12.1.0",
+    "picocolors": "^1.1.1",
+    "yaml": "^2.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@vercel/ncc": "^0.38.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
