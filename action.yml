@@ -1,0 +1,21 @@
+name: Quorum
+description: Multi-AI consensus review for pull requests. Blocks merge unless required AI agents agree.
+author: quorum
+
+branding:
+  icon: check-circle
+  color: purple
+
+inputs:
+  config-path:
+    description: Path to quorum.config.yml in the repo
+    required: false
+    default: quorum.config.yml
+  install-agents:
+    description: Install missing agent CLIs (claude, codex, gemini) before running
+    required: false
+    default: 'true'
+
+runs:
+  using: node20
+  main: dist/action/index.js
