@@ -8,7 +8,6 @@ agents:
   # Minimum: 2 agents. Recommended: 3.
   required:
     - claude
-    - codex
     - gemini
 
   # Advisory agents comment on the PR but DO NOT block merge.
