@@ -1,0 +1,82 @@
+# quorum.config.yml — Multi-AI consensus review for pull requests.
+#
+# Everything here is overridable. Defaults are sensible; only set what you care about.
+# Validate any time with `quorum doctor`.
+
+agents:
+  # Required agents must all be configured. Their verdicts count toward consensus.
+  # Minimum: 2 agents. Recommended: 3.
+  required:
+    - claude
+    - codex
+    - gemini
+
+  # Advisory agents comment on the PR but DO NOT block merge.
+  advisory: []
+    # - grok
+
+  # Per-agent overrides (all optional).
+  options: {}
+    # claude:
+    #   model: claude-opus-4-7
+    #   timeout_ms: 120000
+    # grok:
+    #   model: grok-4-latest
+
+# Consensus rule — WHO must approve:
+#   strict   — every required agent must verdict "approve" (recommended)
+#   majority — >50% of required agents must approve; needs ≥3 required agents
+mode: strict
+
+# Deliberation — HOW agents reach their verdicts:
+#   silent      — blind parallel reviews, dissent surfaced verbatim, you break ties (default)
+#   debate      — round 1 blind, round 2 each agent sees the others and may update its verdict
+#                 (LLMs default to agreeable; the prompt mitigates but doesn't eliminate this)
+#   collaborate — debate + one designated agent commits fixes; loop until consensus or max_rounds
+#                 (closest to "ready-to-merge PRs"; needs QUORUM_BOT_TOKEN with push access)
+deliberation: silent
+
+deliberation_options:
+  # Cap on the number of bot-pushed iterations on a single PR.
+  max_rounds: 3
+
+  # Which agent commits fixes in collaborate mode. Must be a CLI-based agent (claude/codex/gemini)
+  # — grok has no file-edit capability.
+  implementer: claude
+
+  # Repo secret name holding a PAT or GitHub App token with push access. The workflow uses this
+  # via actions/checkout so pushes can re-trigger downstream workflows (GITHUB_TOKEN cannot).
+  bot_token_secret: QUORUM_BOT_TOKEN
+
+  # If agents go this many rounds without any verdict/concern changes, escalate to a human.
+  escalate_after_no_progress: 2
+
+github:
+  # Post a single (upserted) consensus comment on each PR.
+  post_comments: true
+
+  # Submit a formal GitHub review (APPROVE / REQUEST_CHANGES) — not just a comment.
+  request_changes: true
+
+  # Make the check status red when quorum blocks, so branch protection can require it.
+  # Set false to run advisory-only (commentary but never blocks merge).
+  fail_check: true
+
+  # PRs with this label bypass quorum entirely. Set to null to disable.
+  skip_label: skip-quorum
+
+  # If set, only PRs with this label get reviewed. Set to null for "review everything".
+  only_label: null
+
+review:
+  # Truncate diffs larger than this before sending to agents (token-cost guard).
+  max_diff_bytes: 200000
+
+  # Skip review when EVERY changed file matches one of these glob patterns.
+  skip_paths: []
+    # - "*.md"
+    # - "docs/**"
+    # - ".github/**"
+
+  # Override the default review prompt with a file in your repo. Set to null for default.
+  custom_prompt_path: null

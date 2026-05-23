@@ -1,0 +1,49 @@
+name: Quorum
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# `contents: write` is required for collaborate mode (the implementer commits + pushes).
+# `pull-requests: write` lets the action submit reviews and comments.
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: quorum-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      # Use QUORUM_BOT_TOKEN if set (collaborate mode — pushes trigger downstream workflows);
+      # otherwise fall back to GITHUB_TOKEN (silent/debate modes; collaborate still works but
+      # the implementer's push won't re-trigger this workflow until you re-push manually).
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ secrets.QUORUM_BOT_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install agent CLIs
+        run: |
+          npm i -g @anthropic-ai/claude-code @openai/codex @google/gemini-cli
+
+      - name: Run quorum
+        uses: MehrshadFb/quorum@v1
+        with:
+          config-path: quorum.config.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.QUORUM_CLAUDE_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.QUORUM_CODEX_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.QUORUM_GEMINI_TOKEN }}
+          XAI_API_KEY: ${{ secrets.QUORUM_GROK_API_KEY }}
