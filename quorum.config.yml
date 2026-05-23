@@ -21,6 +21,8 @@ agents:
     #   timeout_ms: 120000
     # grok:
     #   model: grok-4-latest
+    gemini:
+      model: gemini-2.5-flash
 
 # Consensus rule — WHO must approve:
 #   strict   — every required agent must verdict "approve" (recommended)
