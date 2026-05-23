@@ -1,13 +1,15 @@
 import { parseAgentJSON, errorReview, spawnCapture, type AgentRunner, type AgentInput } from './util.js';
 import type { Review } from '../consensus.js';
 
-// Note: gemini CLI flags vary between releases (Google has shipped multiple
-// "gemini" CLIs under different package names). We use a conservative
-// invocation that the @google/gemini-cli accepts: `gemini -p <prompt>` or
-// stdin via `gemini -p -`. If your installed CLI differs, set
-// `agents.options.gemini.cli_args` and we will surface that in a future rev.
+// Confirmed against `gemini --help` (@google/gemini-cli):
+//   -p, --prompt <string>     Non-interactive (headless) mode. The prompt MUST be a string argument
+//                             (passing `-` is interpreted as a literal dash, not stdin → hangs).
+//   --skip-trust              Trust the current workspace for this session (needed in CI/untrusted dirs).
+//   --approval-mode plan      Read-only mode — no file edits, no tool execution.
+//   -o, --output-format text  Plain text response, no formatting noise.
+//   -m, --model <name>        Model override.
 //
-// Auth: reads GEMINI_API_KEY (or whatever `gemini auth login` configured).
+// Auth: gemini auth login (OAuth) or GEMINI_API_KEY env var.
 
 // NOTE: no env-var precheck — gemini CLI may read auth from a config file
 // after `gemini auth login`. Let it error itself if no usable credential.
@@ -16,14 +18,18 @@ export const gemini: AgentRunner = {
   name: 'gemini',
   async review(input: AgentInput): Promise<Review> {
     try {
-      // --skip-trust: gemini refuses non-interactive runs in untrusted dirs by default
-      const args = ['-p', '-', '--skip-trust'];
+      const args = [
+        '-p', input.prompt,
+        '--skip-trust',
+        '--approval-mode', 'plan',
+        '-o', 'text',
+      ];
       if (input.options?.model) args.push('--model', input.options.model);
 
       const stdout = await spawnCapture({
         cmd: 'gemini',
         args,
-        stdin: input.prompt,
+        stdin: '',
         timeoutMs: input.options?.timeout_ms ?? 180_000,
       });
       return parseAgentJSON(stdout, 'gemini');
