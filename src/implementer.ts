@@ -77,7 +77,6 @@ export async function runImplementer(input: ImplementerInput): Promise<boolean> 
 async function runClaudeImplementer(prompt: string, opts: { model?: string; timeout_ms?: number }): Promise<void> {
   const args = [
     '-p',
-    '--bare',
     '--tools', 'Read,Edit,Write,Glob,Grep',
     '--output-format', 'text',
     '--allow-dangerously-skip-permissions',
@@ -116,7 +115,8 @@ async function runGeminiImplementer(prompt: string, opts: { model?: string; time
   // Gemini CLI's file-edit story varies by release. This is a best-effort
   // invocation; if your installed CLI rejects it, set options.gemini.model
   // and timeout_ms in config and report back.
-  const args = ['-p', '-'];
+  // --skip-trust: needed to run non-interactively outside the trust-list.
+  const args = ['-p', '-', '--skip-trust'];
   if (opts.model) args.push('--model', opts.model);
   await spawnCapture({
     cmd: 'gemini',

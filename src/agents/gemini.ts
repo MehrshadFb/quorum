@@ -9,14 +9,15 @@ import type { Review } from '../consensus.js';
 //
 // Auth: reads GEMINI_API_KEY (or whatever `gemini auth login` configured).
 
+// NOTE: no env-var precheck — gemini CLI may read auth from a config file
+// after `gemini auth login`. Let it error itself if no usable credential.
+
 export const gemini: AgentRunner = {
   name: 'gemini',
   async review(input: AgentInput): Promise<Review> {
-    if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY && !process.env.GEMINI_SESSION_TOKEN) {
-      return errorReview('gemini', 'no GEMINI_API_KEY, GOOGLE_API_KEY, or GEMINI_SESSION_TOKEN in env');
-    }
     try {
-      const args = ['-p', '-'];
+      // --skip-trust: gemini refuses non-interactive runs in untrusted dirs by default
+      const args = ['-p', '-', '--skip-trust'];
       if (input.options?.model) args.push('--model', input.options.model);
 
       const stdout = await spawnCapture({

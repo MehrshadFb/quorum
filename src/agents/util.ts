@@ -142,7 +142,7 @@ export function spawnCapture(opts: SpawnOpts): Promise<string> {
     child.on('close', code => {
       if (timeout) clearTimeout(timeout);
       if (code === 0) resolve(stdout);
-      else reject(new Error(`${opts.cmd} exited ${code}: ${stderr.slice(0, 500)}`));
+      else reject(new Error(`${opts.cmd} exited ${code}: ${stderr.slice(-4000)}`));
     });
     child.stdin.write(opts.stdin);
     child.stdin.end();

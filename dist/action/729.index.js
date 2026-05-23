@@ -80,7 +80,6 @@ async function runImplementer(input) {
 async function runClaudeImplementer(prompt, opts) {
     const args = [
         '-p',
-        '--bare',
         '--tools', 'Read,Edit,Write,Glob,Grep',
         '--output-format', 'text',
         '--allow-dangerously-skip-permissions',
@@ -119,7 +118,8 @@ async function runGeminiImplementer(prompt, opts) {
     // Gemini CLI's file-edit story varies by release. This is a best-effort
     // invocation; if your installed CLI rejects it, set options.gemini.model
     // and timeout_ms in config and report back.
-    const args = ['-p', '-'];
+    // --skip-trust: needed to run non-interactively outside the trust-list.
+    const args = ['-p', '-', '--skip-trust'];
     if (opts.model)
         args.push('--model', opts.model);
     await (0,_agents_util_js__WEBPACK_IMPORTED_MODULE_3__/* .spawnCapture */ .EO)({
