@@ -16,9 +16,9 @@ agents:
 
   # Per-agent overrides (all optional).
   options:
-    # claude:
-    #   model: claude-opus-4-7
-    #   timeout_ms: 120000
+    claude:
+      model: sonnet
+      timeout_ms: 120000
     # grok:
     #   model: grok-4-latest
     gemini:

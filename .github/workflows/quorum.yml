@@ -38,7 +38,7 @@ jobs:
           npm i -g @anthropic-ai/claude-code @openai/codex @google/gemini-cli
 
       - name: Run quorum
-        uses: MehrshadFb/quorum@v1
+        uses: ./
         with:
           config-path: quorum.config.yml
         env:
