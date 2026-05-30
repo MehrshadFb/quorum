@@ -109,7 +109,7 @@ export async function setupCmd(opts: SetupOpts): Promise<void> {
 
   // 2. Choose agents
   const chosen = opts.yes ? ['claude', 'codex', 'gemini'] as AgentName[] : await p.multiselect({
-    message: 'Which AI agents should review your PRs?  (need ≥2)',
+    message: 'Which AI agents should review your PRs?  (need ≥1)',
     options: KNOWN_AGENTS.map(name => ({
       value: name,
       label: agentLabel(name),
@@ -121,8 +121,8 @@ export async function setupCmd(opts: SetupOpts): Promise<void> {
   if (p.isCancel(chosen)) { p.cancel('Cancelled.'); process.exit(1); }
   const required = chosen as AgentName[];
 
-  if (required.length < 2) {
-    p.cancel('Quorum needs at least 2 agents. Re-run and pick 2 or more.');
+  if (required.length < 1) {
+    p.cancel('Pick at least 1 agent. Re-run and choose an agent.');
     process.exit(1);
   }
 

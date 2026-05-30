@@ -5,7 +5,7 @@
 
 agents:
   # Required agents must all be configured. Their verdicts count toward consensus.
-  # Minimum: 2 agents. Recommended: 3.
+  # Minimum: 1 agent. Recommended: 3.
   required:
     - claude
     - codex

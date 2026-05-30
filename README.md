@@ -27,7 +27,7 @@ npx quorum@latest setup
 
 That's it. The wizard:
 1. Checks your environment (Node 20+, `git`, `gh`).
-2. Asks which AIs you want on the panel (minimum 2, recommended 3).
+2. Asks which AIs you want on the panel (minimum 1, recommended 3).
 3. Picks a consensus mode (strict — all must agree, or majority — >50%).
 4. Writes `quorum.config.yml` and `.github/workflows/quorum.yml`.
 5. Walks you through adding API keys for Claude, Codex, Gemini, and Grok.
@@ -107,7 +107,7 @@ Everything lives in `quorum.config.yml`. The full schema (with defaults) is in [
 
 ```yaml
 agents:
-  required: [claude, codex, gemini]      # min 2, all must approve in strict mode
+  required: [claude, codex, gemini]      # min 1, all must approve in strict mode
   advisory: [grok]                       # comments only, doesn't block
   options:
     grok:

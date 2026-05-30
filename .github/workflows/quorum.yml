@@ -35,7 +35,7 @@ jobs:
 
       - name: Install agent CLIs
         run: |
-          npm i -g @anthropic-ai/claude-code @openai/codex @google/gemini-cli
+          npm i -g @anthropic-ai/claude-code
 
       - name: Run quorum
         uses: ./
