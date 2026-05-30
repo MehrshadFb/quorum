@@ -3,7 +3,7 @@ import type { Review } from '../consensus.js';
 
 // Confirmed against `gemini --help` (@google/gemini-cli):
 //   -p, --prompt <string>     Non-interactive (headless) mode. The prompt MUST be a string argument
-//                             (passing `-` is interpreted as a literal dash, not stdin → hangs).
+//                             and is appended to stdin when stdin is provided.
 //   --skip-trust              Trust the current workspace for this session (needed in CI/untrusted dirs).
 //   --approval-mode plan      Read-only mode — no file edits, no tool execution.
 //   -o, --output-format text  Plain text response, no formatting noise.
@@ -19,7 +19,7 @@ export const gemini: AgentRunner = {
     }
     try {
       const args = [
-        '-p', input.prompt,
+        '-p', 'Respond to the prompt provided on stdin.',
         '--skip-trust',
         '--approval-mode', 'plan',
         '-o', 'text',
@@ -29,7 +29,7 @@ export const gemini: AgentRunner = {
       const stdout = await spawnCapture({
         cmd: 'gemini',
         args,
-        stdin: '',
+        stdin: input.prompt,
         timeoutMs: input.options?.timeout_ms ?? 180_000,
       });
       return parseAgentJSON(stdout, 'gemini');

@@ -125,7 +125,7 @@ async function runGeminiImplementer(prompt: string, opts: { model?: string; time
   // --approval-mode yolo: auto-approve all tool actions (edits, writes).
   // --skip-trust: trust the current workspace.
   const args = [
-    '-p', prompt,
+    '-p', 'Execute the implementation prompt provided on stdin.',
     '--skip-trust',
     '--approval-mode', 'yolo',
     '-o', 'text',
@@ -134,7 +134,7 @@ async function runGeminiImplementer(prompt: string, opts: { model?: string; time
   await spawnCapture({
     cmd: 'gemini',
     args,
-    stdin: '',
+    stdin: prompt,
     timeoutMs: opts.timeout_ms ?? 600_000,
   });
 }
