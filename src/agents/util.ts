@@ -102,14 +102,28 @@ function asSuggestion(s: unknown): Suggestion | null {
   };
 }
 
+// Strips ANSI escape codes (color, cursor moves) so error messages render
+// cleanly in markdown PR comments instead of as garbled "[31m...[0m" noise.
+const ANSI_REGEX = /[][[\]()#;?]*(?:(?:(?:[a-zA-Z\d]*(?:;[a-zA-Z\d]*)*)?)|(?:(?:\d{1,4}(?:;\d{0,4})*)?[\dA-PRZcf-ntqry=><~]))/g;
+
+export function stripAnsi(s: string): string {
+  return s.replace(ANSI_REGEX, '');
+}
+
+const MAX_ERROR_LEN = 1200;
+
 export function errorReview(agent: AgentName, message: string): Review {
+  const cleaned = stripAnsi(message).trim();
+  const truncated = cleaned.length > MAX_ERROR_LEN
+    ? cleaned.slice(0, MAX_ERROR_LEN) + ' …(truncated; see workflow logs for full error)'
+    : cleaned;
   return {
     agent,
     verdict: 'comment',
     summary: '',
     concerns: [],
     suggestions: [],
-    error: message,
+    error: truncated,
   };
 }
 

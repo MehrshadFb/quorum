@@ -86,10 +86,25 @@ test('missing required agent → needs_human', () => {
   assert.match(r.reason, /gemini/);
 });
 
-test('errored required agent → needs_human', () => {
+test('errored required agent → needs_human (with classified reason)', () => {
   const r = consensus([approve('claude'), approve('codex'), errored('gemini', 'cli crashed')], STRICT_3);
   assert.equal(r.decision, 'needs_human');
-  assert.match(r.reason, /gemini.*cli crashed/);
+  assert.match(r.reason, /gemini/);
+  // Reason should NOT include the raw error text — that's surfaced per-agent.
+  assert.doesNotMatch(r.reason, /cli crashed/);
+});
+
+test('all required agents errored → "All N required agents couldn\'t complete"', () => {
+  const r = consensus(
+    [
+      errored('claude', '401 Unauthorized'),
+      errored('codex', 'Missing bearer'),
+      errored('gemini', 'quota exceeded'),
+    ],
+    STRICT_3,
+  );
+  assert.equal(r.decision, 'needs_human');
+  assert.match(r.reason, /All 3 required agents/);
 });
 
 test('blockers are tagged with the agent that raised them', () => {

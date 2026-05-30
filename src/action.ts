@@ -68,7 +68,14 @@ async function main(): Promise<void> {
     await upsertComment(pr.number, body);
   }
 
-  if (config.github.request_changes && !outcome.implementerCommitted) {
+  // Only submit a formal review when agents actually voted. If all required
+  // agents errored (decision = needs_human due to setup/auth/quota), posting
+  // REQUEST_CHANGES is misleading — nobody voted — so we leave the PR with
+  // just the explanatory comment and a failed check.
+  const allErrored = config.agents.required.length > 0 &&
+    config.agents.required.every(a => outcome.rounds[outcome.rounds.length - 1]?.reviews.find(r => r.agent === a)?.error);
+
+  if (config.github.request_changes && !outcome.implementerCommitted && !allErrored) {
     const event = outcome.result.decision === 'approve' ? 'APPROVE'
       : outcome.result.decision === 'request_changes' ? 'REQUEST_CHANGES'
       : 'COMMENT';
