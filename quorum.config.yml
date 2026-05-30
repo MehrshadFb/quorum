@@ -8,7 +8,7 @@ agents:
   # Minimum: 2 agents. Recommended: 3.
   required:
     - claude
-    - gemini
+    - codex
 
   # Advisory agents comment on the PR but DO NOT block merge.
   advisory: []
@@ -23,6 +23,7 @@ agents:
     #   model: grok-4-latest
     gemini:
       model: gemini-2.5-flash
+      timeout_ms: 60000
 
 # Consensus rule — WHO must approve:
 #   strict   — every required agent must verdict "approve" (recommended)
@@ -71,7 +72,7 @@ github:
 
 review:
   # Truncate diffs larger than this before sending to agents (token-cost guard).
-  max_diff_bytes: 200000
+  max_diff_bytes: 50000
 
   # Skip review when EVERY changed file matches one of these glob patterns.
   skip_paths: []

@@ -64,7 +64,7 @@ export const DEFAULT_CONFIG: QuorumConfig = {
     only_label: null,
   },
   review: {
-    max_diff_bytes: 200_000,
+    max_diff_bytes: 50_000,
     skip_paths: [],
     custom_prompt_path: null,
   },

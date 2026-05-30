@@ -11,7 +11,7 @@ test('accepts a minimal valid config', () => {
   assert.equal(cfg.mode, 'strict');
   // Defaults applied:
   assert.equal(cfg.github.fail_check, true);
-  assert.equal(cfg.review.max_diff_bytes, 200_000);
+  assert.equal(cfg.review.max_diff_bytes, 50_000);
 });
 
 test('rejects fewer than 2 required agents', () => {

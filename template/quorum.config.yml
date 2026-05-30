@@ -70,7 +70,7 @@ github:
 
 review:
   # Truncate diffs larger than this before sending to agents (token-cost guard).
-  max_diff_bytes: 200000
+  max_diff_bytes: 50000
 
   # Skip review when EVERY changed file matches one of these glob patterns.
   skip_paths: []
