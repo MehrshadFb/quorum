@@ -8,18 +8,21 @@ agents:
   # Minimum: 1 agent. Recommended: 3.
   required:
     - claude
-    - codex
-    - gemini
 
   # Advisory agents comment on the PR but DO NOT block merge.
   advisory: []
     # - grok
 
   # Per-agent overrides (all optional).
-  options: {}
-    # claude:
-    #   model: sonnet
-    #   timeout_ms: 120000
+  options:
+    claude:
+      model: sonnet
+      timeout_ms: 120000
+    # codex:
+    #   model: gpt-5.1
+    # gemini:
+    #   model: gemini-2.5-flash
+    #   timeout_ms: 60000
     # grok:
     #   model: grok-4-latest
 

@@ -64,7 +64,7 @@ export const DEFAULT_CONFIG: QuorumConfig = {
     only_label: null,
   },
   review: {
-    max_diff_bytes: 200_000,
+    max_diff_bytes: 50_000,
     skip_paths: [],
     custom_prompt_path: null,
   },
@@ -87,8 +87,8 @@ export function validate(raw: unknown): QuorumConfig {
   const options = asAgentOptions(agents.options ?? {});
   const mode = asMode(r.mode ?? 'strict');
 
-  if (required.length < 2) {
-    throw new Error(`agents.required must list at least 2 agents (quorum needs ≥2). Got: ${required.length}`);
+  if (required.length < 1) {
+    throw new Error(`agents.required must list at least 1 agent. Got: ${required.length}`);
   }
   if (mode === 'majority' && required.length < 3) {
     throw new Error(`mode: majority requires at least 3 required agents (for a tiebreaker). Got: ${required.length}`);

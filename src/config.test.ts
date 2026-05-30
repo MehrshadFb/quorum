@@ -11,13 +11,18 @@ test('accepts a minimal valid config', () => {
   assert.equal(cfg.mode, 'strict');
   // Defaults applied:
   assert.equal(cfg.github.fail_check, true);
-  assert.equal(cfg.review.max_diff_bytes, 200_000);
+  assert.equal(cfg.review.max_diff_bytes, 50_000);
 });
 
-test('rejects fewer than 2 required agents', () => {
+test('accepts a single required agent for low-cost smoke checks', () => {
+  const cfg = validate({ agents: { required: ['claude'] }, mode: 'strict' });
+  assert.deepEqual(cfg.agents.required, ['claude']);
+});
+
+test('rejects zero required agents', () => {
   assert.throws(
-    () => validate({ agents: { required: ['claude'] }, mode: 'strict' }),
-    /at least 2 agents/,
+    () => validate({ agents: { required: [] }, mode: 'strict' }),
+    /at least 1 agent/,
   );
 });
 

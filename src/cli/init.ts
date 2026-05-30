@@ -35,7 +35,7 @@ export async function initCmd(opts: InitOpts): Promise<void> {
   console.log('');
   console.log(pc.bold('Next steps'));
   console.log(`  1. Edit ${pc.cyan('quorum.config.yml')} — pick required agents and mode.`);
-  console.log(`  2. Run  ${pc.cyan('quorum auth')} — set up provider tokens.`);
+  console.log(`  2. Run  ${pc.cyan('quorum auth')} — set up provider API keys.`);
   console.log(`  3. Run  ${pc.cyan('quorum doctor')} — verify everything is wired up.`);
   console.log(`  4. Open a PR and watch Quorum vote.`);
   console.log('');

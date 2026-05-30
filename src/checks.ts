@@ -1,8 +1,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { access, readFile, stat } from 'node:fs/promises';
+import { access, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { homedir } from 'node:os';
 import type { AgentName } from './config.js';
 
 const exec = promisify(execFile);
@@ -165,35 +164,15 @@ export async function checkBranchProtection(): Promise<CheckResult> {
 }
 
 export async function checkClaudeToken(): Promise<string | null> {
-  if (process.env.CLAUDE_CODE_OAUTH_TOKEN) return process.env.CLAUDE_CODE_OAUTH_TOKEN;
-  const candidates = [
-    join(homedir(), '.claude', 'auth.json'),
-    join(homedir(), '.claude', 'credentials.json'),
-    join(homedir(), '.config', 'claude', 'auth.json'),
-  ];
-  for (const p of candidates) {
-    try {
-      const data = JSON.parse(await readFile(p, 'utf8'));
-      const token = data.token ?? data.access_token ?? data.oauth_token ?? data.sessionKey;
-      if (typeof token === 'string') return token;
-    } catch {}
-  }
-  return null;
+  return process.env.ANTHROPIC_API_KEY ?? null;
 }
 
 export async function checkCodexToken(): Promise<string | null> {
-  if (process.env.OPENAI_API_KEY) return process.env.OPENAI_API_KEY;
-  if (process.env.CODEX_SESSION_TOKEN) return process.env.CODEX_SESSION_TOKEN;
-  try {
-    const data = JSON.parse(await readFile(join(homedir(), '.codex', 'auth.json'), 'utf8'));
-    return data.token ?? data.access_token ?? null;
-  } catch {
-    return null;
-  }
+  return process.env.OPENAI_API_KEY ?? null;
 }
 
 export async function checkGeminiToken(): Promise<string | null> {
-  return process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY ?? process.env.GEMINI_SESSION_TOKEN ?? null;
+  return process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY ?? null;
 }
 
 export async function checkGrokKey(): Promise<string | null> {

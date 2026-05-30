@@ -20,7 +20,7 @@ program
 
 program
   .command('setup')
-  .description('Guided one-shot setup: workflow + config + tokens (recommended)')
+  .description('Guided one-shot setup: workflow + config + API keys (recommended)')
   .option('--yes', 'accept all defaults non-interactively (3-agent strict mode)', false)
   .option('--skip-auth', 'install workflow + config but don\'t walk through provider auth', false)
   .action(opts => wrap(() => setupCmd(opts)));
@@ -33,7 +33,7 @@ program
 
 program
   .command('auth')
-  .description('Set up provider tokens and push them to repo secrets')
+  .description('Set up provider API keys and push them to repo secrets')
   .option('--agent <name>', 'only set up a single agent (claude | codex | gemini | grok)')
   .option('--no-push', 'don\'t push secrets to GitHub, just print them')
   .action(opts => wrap(() => authCmd(opts)));

@@ -40,21 +40,21 @@ interface SetupOpts {
 const SECRET_NAMES: Record<AgentName, { secret: string; envVar: string; setupCmd: string; description: string }> = {
   claude: {
     secret: 'QUORUM_CLAUDE_TOKEN',
-    envVar: 'CLAUDE_CODE_OAUTH_TOKEN',
-    setupCmd: 'claude setup-token',
-    description: 'Sign in with Claude Pro/Max (OAuth, stored in ~/.claude/).',
+    envVar: 'ANTHROPIC_API_KEY',
+    setupCmd: 'Get an API key at https://console.anthropic.com/settings/keys',
+    description: 'Anthropic API key.',
   },
   codex: {
     secret: 'QUORUM_CODEX_TOKEN',
     envVar: 'OPENAI_API_KEY',
-    setupCmd: 'codex login',
-    description: 'Sign in with ChatGPT (or paste an OPENAI_API_KEY).',
+    setupCmd: 'Get an API key at https://platform.openai.com/api-keys',
+    description: 'OpenAI API key.',
   },
   gemini: {
     secret: 'QUORUM_GEMINI_TOKEN',
     envVar: 'GEMINI_API_KEY',
-    setupCmd: 'gemini auth login',
-    description: 'Sign in with Google (or paste a GEMINI_API_KEY from AI Studio).',
+    setupCmd: 'Get an API key at https://aistudio.google.com/apikey',
+    description: 'Gemini API key from AI Studio.',
   },
   grok: {
     secret: 'QUORUM_GROK_API_KEY',
@@ -68,7 +68,7 @@ export async function setupCmd(opts: SetupOpts): Promise<void> {
   console.clear();
   p.intro(pc.bgMagenta(pc.white(' quorum  setup ')));
   p.note(
-    'Quorum makes every PR pass through multiple AI reviewers before merge.\nThis wizard installs the workflow, captures provider tokens, and shows you how to lock down main.',
+    'Quorum makes every PR pass through multiple AI reviewers before merge.\nThis wizard installs the workflow, captures provider API keys, and shows you how to lock down main.',
     'what this does',
   );
 
@@ -109,7 +109,7 @@ export async function setupCmd(opts: SetupOpts): Promise<void> {
 
   // 2. Choose agents
   const chosen = opts.yes ? ['claude', 'codex', 'gemini'] as AgentName[] : await p.multiselect({
-    message: 'Which AI agents should review your PRs?  (need ≥2)',
+    message: 'Which AI agents should review your PRs?  (need ≥1)',
     options: KNOWN_AGENTS.map(name => ({
       value: name,
       label: agentLabel(name),
@@ -121,8 +121,8 @@ export async function setupCmd(opts: SetupOpts): Promise<void> {
   if (p.isCancel(chosen)) { p.cancel('Cancelled.'); process.exit(1); }
   const required = chosen as AgentName[];
 
-  if (required.length < 2) {
-    p.cancel('Quorum needs at least 2 agents. Re-run and pick 2 or more.');
+  if (required.length < 1) {
+    p.cancel('Pick at least 1 agent. Re-run and choose an agent.');
     process.exit(1);
   }
 
@@ -236,7 +236,7 @@ export async function setupCmd(opts: SetupOpts): Promise<void> {
   if (opts.skipAuth) {
     p.note('Auth skipped. Run `quorum auth` when ready.', 'step 3 of 3');
   } else {
-    p.note(`Setting up tokens for: ${required.join(', ')}`, 'step 3 of 3');
+    p.note(`Setting up API keys for: ${required.join(', ')}`, 'step 3 of 3');
     for (const agent of required) {
       await setupAgent(agent, ghOk);
     }
@@ -300,13 +300,13 @@ async function setupAgent(agent: AgentName, ghOk: boolean): Promise<void> {
     }
   }
 
-  // Already have a token?
+  // Already have an API key?
   const existing = await readExistingToken(agent);
   let token = existing;
 
   if (existing) {
     const reuse = await p.confirm({
-      message: `Found a token for ${agent}. Reuse it?`,
+      message: `Found an API key for ${agent}. Reuse it?`,
       initialValue: true,
     });
     if (p.isCancel(reuse)) return;
@@ -314,46 +314,23 @@ async function setupAgent(agent: AgentName, ghOk: boolean): Promise<void> {
   }
 
   if (!token) {
-    if (agent === 'grok') {
-      const entered = await p.password({
-        message: 'Paste your xAI API key (from https://console.x.ai):',
-        mask: '•',
-      });
-      if (p.isCancel(entered) || !entered) {
-        console.log(pc.yellow('  skipped'));
-        return;
-      }
-      token = entered;
-    } else {
-      p.note(
-        `Run this in another terminal, complete the sign-in, then come back here:\n  ${pc.cyan(spec.setupCmd)}`,
-        `${agent} sign-in`,
-      );
-      const ready = await p.confirm({ message: 'Signed in?', initialValue: true });
-      if (p.isCancel(ready) || !ready) {
-        console.log(pc.yellow(`  skipped — re-run \`quorum auth --agent ${agent}\` later`));
-        return;
-      }
-      token = await readExistingToken(agent);
-      if (!token) {
-        const entered = await p.password({
-          message: `Couldn't find a token automatically. Paste it (or an API key fallback):`,
-          mask: '•',
-        });
-        if (p.isCancel(entered) || !entered) {
-          console.log(pc.yellow('  skipped'));
-          return;
-        }
-        token = entered;
-      }
+    p.note(spec.setupCmd, `${agent} API key`);
+    const entered = await p.password({
+      message: `Paste your ${agentLabel(agent)} API key:`,
+      mask: '•',
+    });
+    if (p.isCancel(entered) || !entered) {
+      console.log(pc.yellow('  skipped'));
+      return;
     }
+    token = entered;
   }
 
   // Push to repo secret
   if (!ghOk) {
     console.log(pc.yellow(`  gh not authed — set this manually in GitHub repo settings:`));
     console.log(`     Name:   ${pc.cyan(spec.secret)}`);
-    console.log(`     Value:  (the token you just captured)`);
+    console.log(`     Value:  (the API key you just entered)`);
     return;
   }
 

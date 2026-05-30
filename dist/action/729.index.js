@@ -78,8 +78,12 @@ async function runImplementer(input) {
     }
 }
 async function runClaudeImplementer(prompt, opts) {
+    if (!process.env.ANTHROPIC_API_KEY) {
+        throw new Error('no ANTHROPIC_API_KEY in env');
+    }
     const args = [
         '-p',
+        '--bare',
         '--tools', 'Read,Edit,Write,Glob,Grep',
         '--output-format', 'text',
         '--allow-dangerously-skip-permissions',
@@ -96,6 +100,9 @@ async function runClaudeImplementer(prompt, opts) {
     });
 }
 async function runCodexImplementer(prompt, opts) {
+    if (!process.env.OPENAI_API_KEY) {
+        throw new Error('no OPENAI_API_KEY in env');
+    }
     const args = [
         'exec',
         '--skip-git-repo-check',
@@ -115,10 +122,13 @@ async function runCodexImplementer(prompt, opts) {
     });
 }
 async function runGeminiImplementer(prompt, opts) {
+    if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
+        throw new Error('no GEMINI_API_KEY or GOOGLE_API_KEY in env');
+    }
     // --approval-mode yolo: auto-approve all tool actions (edits, writes).
     // --skip-trust: trust the current workspace.
     const args = [
-        '-p', prompt,
+        '-p', 'Execute the implementation prompt provided on stdin.',
         '--skip-trust',
         '--approval-mode', 'yolo',
         '-o', 'text',
@@ -128,7 +138,7 @@ async function runGeminiImplementer(prompt, opts) {
     await (0,_agents_util_js__WEBPACK_IMPORTED_MODULE_3__/* .spawnCapture */ .EO)({
         cmd: 'gemini',
         args,
-        stdin: '',
+        stdin: prompt,
         timeoutMs: opts.timeout_ms ?? 600_000,
     });
 }

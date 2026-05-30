@@ -36,6 +36,36 @@ export interface ConsensusResult {
   blockers: Array<Concern & { agent: AgentName }>;
 }
 
+export interface ErrorInfo {
+  category: 'auth' | 'quota' | 'timeout' | 'setup' | 'trust' | 'parse' | 'unknown';
+  label: string;
+  hint?: string;
+}
+
+// Categorize agent error messages so PR comments show a friendly one-line
+// label (with a fix hint) instead of dumping raw stderr.
+export function classifyError(msg: string): ErrorInfo {
+  if (/401|unauthorized|missing bearer|not logged in|no .*api[_-]?key|no .*oauth|no .*token/i.test(msg)) {
+    return { category: 'auth', label: 'auth failed', hint: 'Check the agent\'s repo secret value (it may be empty, expired, or wrong type).' };
+  }
+  if (/429|quota|rate limit|exhausted|limit:\s*0/i.test(msg)) {
+    return { category: 'quota', label: 'quota / rate limit', hint: 'Switch to a free-tier model in agents.options, or enable paid billing for this provider.' };
+  }
+  if (/timed? out/i.test(msg)) {
+    return { category: 'timeout', label: 'timed out', hint: 'Raise agents.options.<name>.timeout_ms, or move the agent to advisory while you investigate.' };
+  }
+  if (/ENOENT|spawn .* failed|command not found|not installed/i.test(msg)) {
+    return { category: 'setup', label: 'CLI not installed', hint: 'Make sure the workflow installs the agent\'s CLI before running quorum.' };
+  }
+  if (/trusted directory|--skip-trust/i.test(msg)) {
+    return { category: 'trust', label: 'workspace not trusted', hint: 'Upgrade to a quorum version that passes --skip-trust to the CLI.' };
+  }
+  if (/unparseable|invalid verdict|json/i.test(msg)) {
+    return { category: 'parse', label: 'returned malformed output', hint: 'Agent didn\'t return parseable JSON; the model may be ignoring the format instruction.' };
+  }
+  return { category: 'unknown', label: 'unexpected error' };
+}
+
 export function consensus(reviews: Review[], config: QuorumConfig): ConsensusResult {
   const requiredNames = config.agents.required;
   const requiredReviews = reviews.filter(r => requiredNames.includes(r.agent));
@@ -52,9 +82,13 @@ export function consensus(reviews: Review[], config: QuorumConfig): ConsensusRes
 
   const errored = requiredReviews.filter(r => r.error);
   if (errored.length > 0) {
+    const summaries = errored.map(r => `${r.agent} (${classifyError(r.error ?? '').label})`);
+    const reason = errored.length === requiredReviews.length
+      ? `All ${requiredReviews.length} required agents couldn't complete the review — see details below`
+      : `${errored.length} of ${requiredReviews.length} required agents couldn't complete: ${summaries.join(', ')}`;
     return {
       decision: 'needs_human',
-      reason: `Required agents errored: ${errored.map(r => `${r.agent} (${r.error})`).join('; ')}`,
+      reason,
       reviews,
       blockers: [],
     };
@@ -128,9 +162,26 @@ export function formatComment(result: ConsensusResult, config: QuorumConfig): st
   for (const r of result.reviews) {
     const isRequired = config.agents.required.includes(r.agent);
     const role = isRequired ? 'required' : 'advisory';
-    const vEmoji = r.error ? '⚠️' : r.verdict === 'approve' ? '✅' : r.verdict === 'request_changes' ? '🛑' : '💬';
+
+    if (r.error) {
+      const info = classifyError(r.error);
+      lines.push('');
+      lines.push(`<details><summary>⚠️ <strong>${r.agent}</strong> (${role}) — ${info.label}</summary>`);
+      lines.push('');
+      if (info.hint) {
+        lines.push(`> 💡 ${info.hint}`);
+        lines.push('');
+      }
+      lines.push('```');
+      lines.push(r.error);
+      lines.push('```');
+      lines.push('</details>');
+      continue;
+    }
+
+    const vEmoji = r.verdict === 'approve' ? '✅' : r.verdict === 'request_changes' ? '🛑' : '💬';
     lines.push('');
-    lines.push(`<details><summary>${vEmoji} <strong>${r.agent}</strong> (${role}) — ${r.error ? `error: ${r.error}` : r.verdict}</summary>`);
+    lines.push(`<details><summary>${vEmoji} <strong>${r.agent}</strong> (${role}) — ${r.verdict}</summary>`);
     lines.push('');
     if (r.summary) {
       lines.push(r.summary);
