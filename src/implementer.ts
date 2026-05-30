@@ -75,8 +75,12 @@ export async function runImplementer(input: ImplementerInput): Promise<boolean> 
 }
 
 async function runClaudeImplementer(prompt: string, opts: { model?: string; timeout_ms?: number }): Promise<void> {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error('no ANTHROPIC_API_KEY in env');
+  }
   const args = [
     '-p',
+    '--bare',
     '--tools', 'Read,Edit,Write,Glob,Grep',
     '--output-format', 'text',
     '--allow-dangerously-skip-permissions',
@@ -93,6 +97,9 @@ async function runClaudeImplementer(prompt: string, opts: { model?: string; time
 }
 
 async function runCodexImplementer(prompt: string, opts: { model?: string; timeout_ms?: number }): Promise<void> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('no OPENAI_API_KEY in env');
+  }
   const args = [
     'exec',
     '--skip-git-repo-check',
@@ -112,6 +119,9 @@ async function runCodexImplementer(prompt: string, opts: { model?: string; timeo
 }
 
 async function runGeminiImplementer(prompt: string, opts: { model?: string; timeout_ms?: number }): Promise<void> {
+  if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
+    throw new Error('no GEMINI_API_KEY or GOOGLE_API_KEY in env');
+  }
   // --approval-mode yolo: auto-approve all tool actions (edits, writes).
   // --skip-trust: trust the current workspace.
   const args = [

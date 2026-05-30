@@ -9,14 +9,14 @@ import type { Review } from '../consensus.js';
 //   -o, --output-format text  Plain text response, no formatting noise.
 //   -m, --model <name>        Model override.
 //
-// Auth: gemini auth login (OAuth) or GEMINI_API_KEY env var.
-
-// NOTE: no env-var precheck — gemini CLI may read auth from a config file
-// after `gemini auth login`. Let it error itself if no usable credential.
+// Auth: API key only via GEMINI_API_KEY or GOOGLE_API_KEY.
 
 export const gemini: AgentRunner = {
   name: 'gemini',
   async review(input: AgentInput): Promise<Review> {
+    if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
+      return errorReview('gemini', 'no GEMINI_API_KEY or GOOGLE_API_KEY in env');
+    }
     try {
       const args = [
         '-p', input.prompt,

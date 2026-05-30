@@ -14,15 +14,14 @@ import type { Review } from '../consensus.js';
 //   -m, --model <name>                model override
 //   --color never                     no ANSI in output
 //
-// Auth: reads OPENAI_API_KEY (or whatever auth `codex login` set up under $CODEX_HOME).
-
-// NOTE: no env-var precheck — codex stores auth under $CODEX_HOME (default
-// ~/.codex/) after `codex login` and finds it without any env var being
-// set. We let codex itself error if there's no usable credential.
+// Auth: API key only via OPENAI_API_KEY.
 
 export const codex: AgentRunner = {
   name: 'codex',
   async review(input: AgentInput): Promise<Review> {
+    if (!process.env.OPENAI_API_KEY) {
+      return errorReview('codex', 'no OPENAI_API_KEY in env');
+    }
     let workDir: string | null = null;
     try {
       workDir = await mkdtemp(join(tmpdir(), 'quorum-codex-'));

@@ -30,8 +30,8 @@ That's it. The wizard:
 2. Asks which AIs you want on the panel (minimum 2, recommended 3).
 3. Picks a consensus mode (strict — all must agree, or majority — >50%).
 4. Writes `quorum.config.yml` and `.github/workflows/quorum.yml`.
-5. Walks you through `claude setup-token`, `codex login`, `gemini auth login` (or paste API keys).
-6. Pushes each token to your repo as a GitHub secret via `gh secret set`.
+5. Walks you through adding API keys for Claude, Codex, Gemini, and Grok.
+6. Pushes each API key to your repo as a GitHub secret via `gh secret set`.
 7. Tells you how to protect `main` so the check actually blocks merges.
 
 Open a PR. Quorum comments within ~30s.
@@ -45,7 +45,7 @@ Open a PR. Quorum comments within ~30s.
 | `quorum` *(no args)* | Same as `quorum setup` — guided onboarding |
 | `quorum setup` | One-shot guided install + auth (idempotent — safe to re-run) |
 | `quorum init` | Just copy the workflow + config files |
-| `quorum auth [--agent <name>] [--no-push]` | Set up provider tokens, push as repo secrets |
+| `quorum auth [--agent <name>] [--no-push]` | Set up provider API keys, push as repo secrets |
 | `quorum review [-b main]` | Run the panel locally against your current branch |
 | `quorum doctor` | Diagnose missing prerequisites or broken config |
 | `quorum status` | Show current config + which secrets/files are in place |
@@ -86,18 +86,18 @@ Disagreements are **surfaced**, not papered over. The PR comment lists each agen
 
 ---
 
-## Why session tokens?
+## API Keys
 
-Each provider has a CLI tied to your subscription:
+Each provider is run through its CLI, but CI authentication is API-key based:
 
 | Agent | Auth method | Falls back to |
 | --- | --- | --- |
-| Claude | `claude setup-token` (OAuth → Claude Pro/Max) | `ANTHROPIC_API_KEY` |
-| Codex | `codex login` (OAuth → ChatGPT Plus) | `OPENAI_API_KEY` |
-| Gemini | `gemini auth login` (OAuth → Google) | `GEMINI_API_KEY` |
-| Grok | n/a | `XAI_API_KEY` |
+| Claude | `ANTHROPIC_API_KEY` | n/a |
+| Codex | `OPENAI_API_KEY` | n/a |
+| Gemini | `GEMINI_API_KEY` | `GOOGLE_API_KEY` locally |
+| Grok | `XAI_API_KEY` | `GROK_API_KEY` locally |
 
-`quorum auth` captures whichever it can find (session token preferred, API key fallback) and pushes it to a repo secret. **Heads up:** subscription session tokens in CI are grey-area ToS for most providers — they're meant for interactive personal use, and providers can revoke if they detect bot patterns. For team/public use, API keys are the safe path.
+`quorum auth` reads API keys from your local environment when present, or prompts for them, then pushes them to repo secrets.
 
 ---
 
@@ -153,7 +153,7 @@ Before opening a PR, run the panel locally:
 quorum review -b main
 ```
 
-Uses the same prompt and same agents the CI workflow would. Reads tokens from your local env (`CLAUDE_CODE_OAUTH_TOKEN`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`).
+Uses the same prompt and same agents the CI workflow would. Reads API keys from your local env (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`).
 
 ---
 
@@ -190,7 +190,7 @@ quorum/
 
 - **Agent CLI invocation is best-effort.** Non-interactive flags for the provider CLIs (`claude -p`, `codex exec`, `gemini --prompt`) shift between releases. If a runner starts erroring, check the CLI's `--help` and update `src/agents/<provider>.ts`.
 - **LLMs default to agreeable.** Two agents agreeing is often one mirroring the other's framing. Three independent agents disagreeing is real signal. Recommended floor: 3.
-- **Session tokens in CI are grey-area.** See above. API keys are the supported path.
+- **API keys are required in CI.** Session/keychain auth is intentionally not used by Quorum.
 - **`request_changes` on your own PR** doesn't work via the default `GITHUB_TOKEN` — Quorum still posts the comment and fails the check, but the formal review event will be a "comment" instead. Use a fine-scoped PAT in `secrets.QUORUM_REVIEW_TOKEN` if you want formal `REQUEST_CHANGES` on self-authored PRs.
 
 ---

@@ -43,7 +43,7 @@ jobs:
           config-path: quorum.config.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.QUORUM_CLAUDE_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.QUORUM_CLAUDE_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.QUORUM_CODEX_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.QUORUM_GEMINI_TOKEN }}
           XAI_API_KEY: ${{ secrets.QUORUM_GROK_API_KEY }}

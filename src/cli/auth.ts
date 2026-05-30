@@ -22,15 +22,15 @@ interface Spec {
   name: AgentName;
   secret: string;
   envVar: string;
-  setupCmd: string;
+  prompt: string;
   capture: () => Promise<string | null>;
 }
 
 const SPECS: Spec[] = [
-  { name: 'claude', secret: 'QUORUM_CLAUDE_TOKEN',    envVar: 'CLAUDE_CODE_OAUTH_TOKEN', setupCmd: 'claude setup-token',          capture: checkClaudeToken },
-  { name: 'codex',  secret: 'QUORUM_CODEX_TOKEN',     envVar: 'OPENAI_API_KEY',          setupCmd: 'codex login',                  capture: checkCodexToken },
-  { name: 'gemini', secret: 'QUORUM_GEMINI_TOKEN',    envVar: 'GEMINI_API_KEY',          setupCmd: 'gemini auth login',           capture: checkGeminiToken },
-  { name: 'grok',   secret: 'QUORUM_GROK_API_KEY',    envVar: 'XAI_API_KEY',             setupCmd: 'Get a key at https://console.x.ai', capture: checkGrokKey },
+  { name: 'claude', secret: 'QUORUM_CLAUDE_TOKEN',    envVar: 'ANTHROPIC_API_KEY', prompt: 'Paste your Anthropic API key:', capture: checkClaudeToken },
+  { name: 'codex',  secret: 'QUORUM_CODEX_TOKEN',     envVar: 'OPENAI_API_KEY',    prompt: 'Paste your OpenAI API key:',    capture: checkCodexToken },
+  { name: 'gemini', secret: 'QUORUM_GEMINI_TOKEN',    envVar: 'GEMINI_API_KEY',    prompt: 'Paste your Gemini API key:',    capture: checkGeminiToken },
+  { name: 'grok',   secret: 'QUORUM_GROK_API_KEY',    envVar: 'XAI_API_KEY',       prompt: 'Paste your xAI API key:',       capture: checkGrokKey },
 ];
 
 export async function authCmd(opts: AuthOpts): Promise<void> {
@@ -42,7 +42,7 @@ export async function authCmd(opts: AuthOpts): Promise<void> {
   if (push) {
     const ghOk = await checkGhAuthed();
     if (!ghOk.ok) {
-      p.note(`gh CLI isn't ready (${ghOk.detail}). Continue without auto-pushing? Tokens will be printed for you to set manually.`, 'heads up');
+      p.note(`gh CLI isn't ready (${ghOk.detail}). Continue without auto-pushing? API key lengths will be printed for you to set manually.`, 'heads up');
       const proceed = await p.confirm({ message: 'Continue without pushing?', initialValue: true });
       if (p.isCancel(proceed) || !proceed) { p.cancel('Auth gh then re-run.'); process.exit(1); }
       opts.push = false;
@@ -55,27 +55,15 @@ export async function authCmd(opts: AuthOpts): Promise<void> {
     let token = await spec.capture();
 
     if (token) {
-      const reuse = await p.confirm({ message: `Found a token for ${spec.name}. Use it?`, initialValue: true });
+      const reuse = await p.confirm({ message: `Found an API key for ${spec.name}. Use it?`, initialValue: true });
       if (p.isCancel(reuse)) continue;
       if (!reuse) token = null;
     }
 
     if (!token) {
-      if (spec.name === 'grok') {
-        const entered = await p.password({ message: 'Paste your xAI API key:', mask: '•' });
-        if (p.isCancel(entered) || !entered) { console.log(pc.yellow('  skipped')); continue; }
-        token = entered;
-      } else {
-        p.note(`Run in another terminal, complete the sign-in, then come back:\n  ${pc.cyan(spec.setupCmd)}`, `${spec.name} sign-in`);
-        const ready = await p.confirm({ message: 'Signed in?', initialValue: true });
-        if (p.isCancel(ready) || !ready) { console.log(pc.yellow('  skipped')); continue; }
-        token = await spec.capture();
-        if (!token) {
-          const entered = await p.password({ message: 'Couldn\'t auto-capture. Paste the token (or API-key fallback):', mask: '•' });
-          if (p.isCancel(entered) || !entered) { console.log(pc.yellow('  skipped')); continue; }
-          token = entered;
-        }
-      }
+      const entered = await p.password({ message: spec.prompt, mask: '•' });
+      if (p.isCancel(entered) || !entered) { console.log(pc.yellow('  skipped')); continue; }
+      token = entered;
     }
 
     if (opts.push === false) {
